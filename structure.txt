@@ -1,0 +1,34 @@
+google-oidc-demo/
+├── src/
+│   └── main/
+│       ├── java/
+│       │   └── com/
+│       │       └── example/
+│       │           └── demo/
+│       │               ├── DemoApplication.java                 # Main Spring Boot application class
+│       │               ├── config/
+│       │               │   └── SecurityConfig.java             # Security configuration
+│       │               └── controller/
+│       │                   └── HomeController.java             # Web controller
+│       ├── resources/
+│       │   ├── static/                                         # Static resources (CSS, JS, images)
+│       │   │   ├── css/
+│       │   │   │   └── style.css                              # Custom CSS (optional)
+│       │   │   └── images/
+│       │   ├── templates/                                      # Thymeleaf templates
+│       │   │   ├── index.html                                  # Home page
+│       │   │   ├── login.html                                  # Login page
+│       │   │   └── dashboard.html                              # Dashboard after login
+│       │   ├── application.properties                          # Application configuration
+│       │   └── application.yml                                 # Alternative YAML config (optional)
+│       └── webapp/                                             # Web resources (optional for JSP)
+│           └── WEB-INF/
+├── .env                                                        # Environment variables (development)
+├── .env.example                                                # Example environment variables template
+├── .gitignore                                                  # Git ignore rules
+├── pom.xml                                                     # Maven dependencies and build config
+├── README.md                                                   # Project documentation
+└── scripts/                                                    # Utility scripts
+    ├── start-dev.sh                                            # Development startup script
+    ├── start-prod.sh                                           # Production startup script
+    └── setup-env.sh                                            # Environment setup script

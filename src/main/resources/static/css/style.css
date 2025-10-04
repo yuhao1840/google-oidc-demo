@@ -1,0 +1,26 @@
+/* Custom styles for Google OIDC Demo */
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1200px;
+}
+
+.user-card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.user-card:hover {
+    transform: translateY(-2px);
+}
+
+.claim-item {
+    transition: background-color 0.2s ease;
+}
+
+.claim-item:hover {
+    background-color: #e9ecef;
+}
