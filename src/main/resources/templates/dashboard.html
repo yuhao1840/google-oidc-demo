@@ -21,11 +21,11 @@
             align-items: center;
         }
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 2rem auto;
             padding: 0 2rem;
         }
-        .user-card {
+        .card {
             background: white;
             padding: 2rem;
             border-radius: 12px;
@@ -51,33 +51,53 @@
             margin: 0.25rem 0;
             color: #666;
         }
-        .claims-section {
+        .token-section {
             margin-top: 2rem;
         }
-        .claims-section h3 {
+        .token-section h3 {
             color: #333;
             margin-bottom: 1rem;
+            border-bottom: 2px solid #4285f4;
+            padding-bottom: 0.5rem;
         }
-        .claims-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1rem;
-        }
-        .claim-item {
+        .token-display {
             background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
             padding: 1rem;
+            margin: 1rem 0;
+            word-break: break-all;
+            word-wrap: break-word;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+        }
+        .token-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .meta-item {
+            background: #f8f9fa;
+            padding: 0.75rem;
             border-radius: 6px;
             border-left: 4px solid #4285f4;
         }
-        .claim-key {
+        .meta-label {
             font-weight: 600;
             color: #333;
             display: block;
             margin-bottom: 0.25rem;
         }
-        .claim-value {
+        .meta-value {
             color: #666;
             word-break: break-all;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
         }
         .btn {
             background: #db4437;
@@ -94,10 +114,62 @@
         .btn:hover {
             background: #c53929;
         }
+        .btn-copy {
+            background: #4285f4;
+            padding: 8px 16px;
+            font-size: 0.8rem;
+            margin-left: 1rem;
+        }
+        .btn-copy:hover {
+            background: #3367d6;
+        }
         .home-link {
             color: #4285f4;
             text-decoration: none;
             margin-left: 1rem;
+        }
+        .claims-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .claim-item {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 6px;
+            border-left: 4px solid #34a853;
+        }
+        .claim-key {
+            font-weight: 600;
+            color: #333;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+        .claim-value {
+            color: #666;
+            word-break: break-all;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+        }
+        .copy-notification {
+            background: #34a853;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: none;
+        }
+        .long-value {
+            word-break: break-word;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+            line-height: 1.4;
+            max-width: 100%;
         }
     </style>
 </head>
@@ -113,7 +185,8 @@
 </div>
 
 <div class="container">
-    <div class="user-card" th:if="${name}">
+    <!-- User Profile Card -->
+    <div class="card" th:if="${name}">
         <div class="user-header">
             <img th:src="${picture}" alt="Profile Picture" class="profile-pic">
             <div class="user-info">
@@ -124,8 +197,41 @@
             </div>
         </div>
 
-        <div class="claims-section">
-            <h3>OIDC Claims</h3>
+        <!-- JWT Token Section -->
+        <div class="token-section">
+            <h3>🔐 JWT ID Token</h3>
+
+            <div class="token-meta">
+                <div class="meta-item">
+                    <span class="meta-label">Issued At</span>
+                    <span class="meta-value" th:text="${tokenIssuedAt}">N/A</span>
+                </div>
+                <div class="meta-item">
+                    <span class="meta-label">Expires At</span>
+                    <span class="meta-value" th:text="${tokenExpiresAt}">N/A</span>
+                </div>
+                <div class="meta-item" th:if="${tokenAuthorizedParty}">
+                    <span class="meta-label">Authorized Party</span>
+                    <span class="meta-value" th:text="${tokenAuthorizedParty}">N/A</span>
+                </div>
+                <div class="meta-item" th:if="${tokenAlgorithm}">
+                    <span class="meta-label">Algorithm</span>
+                    <span class="meta-value" th:text="${tokenAlgorithm}">N/A</span>
+                </div>
+            </div>
+
+            <div>
+                <strong>Full JWT Token:</strong>
+                <button class="btn btn-copy" onclick="copyToClipboard('full-token')">Copy Token</button>
+            </div>
+            <div class="token-display" id="full-token" th:text="${idToken}">
+                JWT token will appear here...
+            </div>
+        </div>
+
+        <!-- Claims Section -->
+        <div class="token-section">
+            <h3>📋 OIDC Claims</h3>
             <div class="claims-grid">
                 <div class="claim-item" th:each="claim : ${claims}">
                     <span class="claim-key" th:text="${claim.key}">Key</span>
@@ -135,5 +241,41 @@
         </div>
     </div>
 </div>
+
+<!-- Copy Notification -->
+<div class="copy-notification" id="copy-notification">
+    ✅ Copied to clipboard!
+</div>
+
+<script>
+    function copyToClipboard(elementId) {
+        const element = document.getElementById(elementId);
+        const text = element.textContent || element.innerText;
+
+        navigator.clipboard.writeText(text).then(() => {
+            // Show notification
+            const notification = document.getElementById('copy-notification');
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 2000);
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+            alert('Failed to copy to clipboard');
+        });
+    }
+
+    // Auto-expand token displays on click
+    document.addEventListener('DOMContentLoaded', function() {
+        const tokenDisplays = document.querySelectorAll('.token-display');
+        tokenDisplays.forEach(display => {
+            display.addEventListener('click', function() {
+                this.style.whiteSpace = this.style.whiteSpace === 'pre-wrap' ? 'nowrap' : 'pre-wrap';
+                this.style.overflow = this.style.overflow === 'auto' ? 'hidden' : 'auto';
+                this.style.maxHeight = this.style.maxHeight ? '' : '300px';
+            });
+        });
+    });
+</script>
 </body>
 </html>
