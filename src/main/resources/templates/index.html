@@ -1,19 +1,108 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-    <title>Google OIDC Demo - Spring Boot 3.5.6</title>
+    <title>OIDC Demo - Spring Boot 3.5.6</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link th:href="@{/css/style.css}" rel="stylesheet" type="text/css">
     <style>
-        /* Inline styles as shown in previous response */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            padding: 3rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 1rem;
+        }
+        p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+        .btn {
+            background: #4285f4;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 6px;
+            display: inline-block;
+            font-weight: 500;
+            transition: background 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 0.5rem;
+        }
+        .btn:hover {
+            background: #3367d6;
+        }
+        .btn-secondary {
+            background: #34a853;
+        }
+        .btn-secondary:hover {
+            background: #2e8b47;
+        }
+        .user-info {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            text-align: left;
+        }
+        .user-info h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .welcome-message {
+            color: #4285f4;
+            font-weight: 500;
+            margin-bottom: 1rem;
+        }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>Welcome to Google OIDC Demo</h1>
-    <p>This is a Spring Boot 3.5.6 application integrated with Google OIDC for authentication.</p>
-    <a th:href="@{/dashboard}" class="btn">Login with Google</a>
+    <h1>Welcome to OIDC Demo</h1>
+    <p>This is a Spring Boot 3.5.6 application integrated with OIDC for authentication.</p>
+
+    <!-- Show different content based on authentication status -->
+    <div sec:authorize="isAnonymous()">
+        <p>Please log in to access the dashboard.</p>
+        <a th:href="@{/oauth2/authorization/oidc}" class="btn">Login with OIDC</a>
+    </div>
+
+    <div sec:authorize="isAuthenticated()">
+        <div class="welcome-message">
+            Welcome back! You are already logged in.
+        </div>
+
+        <div class="user-info">
+            <h3>Your Session</h3>
+            <p><strong>Name:</strong> <span sec:authentication="name">User</span></p>
+            <p><strong>Email:</strong> <span sec:authentication="principal.attributes['email']">user@example.com</span>
+            </p>
+        </div>
+
+        <a th:href="@{/dashboard}" class="btn">Go to Dashboard</a>
+        <form th:action="@{/logout}" method="post" style="display: inline;">
+            <button type="submit" class="btn btn-secondary">Logout</button>
+        </form>
+    </div>
 </div>
 </body>
 </html>

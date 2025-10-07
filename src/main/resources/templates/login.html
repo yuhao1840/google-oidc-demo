@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-    <title>Login - Google OIDC Demo</title>
+    <title>Login - OIDC Demo</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
@@ -62,21 +63,49 @@
         .back-link:hover {
             color: #333;
         }
+        .already-logged-in {
+            color: #34a853;
+            background: #e8f5e8;
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+        }
     </style>
 </head>
 <body>
 <div class="container">
     <h1>Login Page</h1>
 
-    <div th:if="${param.error}" class="error">
-        Login failed. Please try again.
+    <!-- Show different content based on authentication status -->
+    <div sec:authorize="isAnonymous()">
+        <div th:if="${param.error}" class="error">
+            Login failed. Please try again.
+        </div>
+
+        <p>Click the button below to login with your OIDC provider:</p>
+        <a th:href="@{/oauth2/authorization/oidc}" class="btn">Login with OIDC</a>
     </div>
 
-    <p>Click the button below to login with Google:</p>
-    <a th:href="@{/oauth2/authorization/google}" class="btn">Login with Google</a>
+    <div sec:authorize="isAuthenticated()">
+        <div class="already-logged-in">
+            ✅ You are already logged in!
+        </div>
+        <p>Redirecting you to the dashboard...</p>
+        <a th:href="@{/dashboard}" class="btn">Go to Dashboard</a>
+    </div>
 
     <br>
     <a th:href="@{/}" class="back-link">← Back to Home</a>
+</div>
+
+<!-- Auto-redirect if already logged in -->
+<div sec:authorize="isAuthenticated()">
+    <script>
+        // Auto-redirect to dashboard after 2 seconds
+        setTimeout(function() {
+            window.location.href = '/dashboard';
+        }, 2000);
+    </script>
 </div>
 </body>
 </html>

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Dashboard - Google OIDC Demo</title>
+    <title>Dashboard - OIDC Demo</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
@@ -51,6 +51,21 @@
             margin: 0.25rem 0;
             color: #666;
         }
+        .provider-badge {
+            display: inline-flex;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            border: 1px solid #e9ecef;
+            font-size: 0.9rem;
+        }
+        .provider-icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 0.5rem;
+            border-radius: 2px;
+        }
         .token-section {
             margin-top: 2rem;
         }
@@ -71,8 +86,19 @@
             font-family: 'Courier New', monospace;
             font-size: 0.9rem;
             line-height: 1.4;
-            white-space: pre-wrap;
+            white-space: nowrap;
+            overflow: hidden;
             overflow-wrap: break-word;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            max-height: 4.2em;
+        }
+        .token-display.expanded {
+            white-space: pre-wrap;
+            max-height: 500px;
+            overflow-y: auto;
+            background: #f0f4f8;
+            border-color: #4285f4;
         }
         .token-meta {
             display: grid;
@@ -91,6 +117,7 @@
             color: #333;
             display: block;
             margin-bottom: 0.25rem;
+            font-size: 0.9rem;
         }
         .meta-value {
             color: #666;
@@ -98,6 +125,8 @@
             word-wrap: break-word;
             overflow-wrap: break-word;
             white-space: normal;
+            font-size: 0.9rem;
+            line-height: 1.4;
         }
         .btn {
             background: #db4437;
@@ -110,6 +139,7 @@
             transition: background 0.3s ease;
             border: none;
             cursor: pointer;
+            font-size: 0.9rem;
         }
         .btn:hover {
             background: #c53929;
@@ -123,10 +153,20 @@
         .btn-copy:hover {
             background: #3367d6;
         }
+        .btn-expand {
+            background: #34a853;
+            padding: 8px 16px;
+            font-size: 0.8rem;
+            margin-left: 0.5rem;
+        }
+        .btn-expand:hover {
+            background: #2e8b47;
+        }
         .home-link {
             color: #4285f4;
             text-decoration: none;
             margin-left: 1rem;
+            font-size: 0.9rem;
         }
         .claims-grid {
             display: grid;
@@ -139,12 +179,18 @@
             padding: 1rem;
             border-radius: 6px;
             border-left: 4px solid #34a853;
+            transition: transform 0.2s ease;
+        }
+        .claim-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         .claim-key {
             font-weight: 600;
             color: #333;
             display: block;
             margin-bottom: 0.25rem;
+            font-size: 0.9rem;
         }
         .claim-value {
             color: #666;
@@ -152,24 +198,43 @@
             word-wrap: break-word;
             overflow-wrap: break-word;
             white-space: normal;
+            font-size: 0.9rem;
+            line-height: 1.4;
         }
         .copy-notification {
             background: #34a853;
             color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
             position: fixed;
             top: 20px;
             right: 20px;
             display: none;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
-        .long-value {
-            word-break: break-word;
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            white-space: normal;
-            line-height: 1.4;
-            max-width: 100%;
+        .token-actions {
+            display: flex;
+            align-items: center;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .token-info {
+            margin: 0.5rem 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .section-divider {
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #e9ecef, transparent);
+            margin: 2rem 0;
+        }
+        .no-data {
+            color: #999;
+            font-style: italic;
+            text-align: center;
+            padding: 2rem;
         }
     </style>
 </head>
@@ -188,12 +253,21 @@
     <!-- User Profile Card -->
     <div class="card" th:if="${name}">
         <div class="user-header">
-            <img th:src="${picture}" alt="Profile Picture" class="profile-pic">
+            <img th:src="${picture}" alt="Profile Picture" class="profile-pic"
+                 onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iODAiIGhlaWdodD0iODAiIHZpZXdCb3g9IjAgMCA4MCA4MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjgwIiBoZWlnaHQ9IjgwIiBmaWxsPSIjRjVGN0ZBIi8+CjxwYXRoIGQ9Ik00MCA0MEM0Ni4yMDA5IDQwIDUxLjMzMzMgMzQuODc2MiA1MS4zMzMzIDI4QzUxLjMzMzMgMjEuMTIzOCA0Ni4yMDA5IDE2IDQwIDE2QzMzLjc5OTEgMTYgMjguNjY2NyAyMS4xMjM4IDI4LjY2NjcgMjhDMjguNjY2NyAzNC44NzYyIDMzLjc5OTEgNDAgNDAgNDBaIiBmaWxsPSIjOUI5QjlCIi8+CjxwYXRoIGQ9Ik00MCA0NC40QzI3LjkyIDQ0LjQgMTguNjY2NyA1NC44IDE4LjY2NjcgNjguODI2MVY3Mi44QzE4LjY2NjcgNzQuNTY1NCAyMC4xMDEzIDc2IDIxLjg2NjcgNzZINTguMTMzM0M1OS44OTg3IDc2IDYxLjMzMzMgNzQuNTY1NCA2MS4zMzMzIDcyLjhWNjguODI2MUM2MS4zMzMzIDU0LjggNTIuMDggNDQuNCA0MCA0NC40WiIgZmlsbD0iIzlCOUI5QiIvPgo8L3N2Zz4K'">
             <div class="user-info">
                 <h2 th:text="'Welcome, ' + ${name} + '!'">Welcome!</h2>
+                <p>
+                    <strong>Provider:</strong>
+                    <span class="provider-badge">
+                            <img th:if="${providerIcon}" th:src="${providerIcon}" class="provider-icon"
+                                 alt="Provider Icon" onerror="this.style.display='none'">
+                            <span th:text="${provider}">OIDC Provider</span>
+                        </span>
+                </p>
                 <p><strong>Email:</strong> <span th:text="${email}"></span></p>
                 <p><strong>Subject:</strong> <span th:text="${subject}"></span></p>
-                <p><strong>Issuer:</strong> <span th:text="${issuer}"></span></p>
+                <p><strong>Issuer:</strong> <span class="meta-value" th:text="${issuer}"></span></p>
             </div>
         </div>
 
@@ -201,14 +275,15 @@
         <div class="token-section">
             <h3>🔐 JWT ID Token</h3>
 
+            <!-- Token Metadata -->
             <div class="token-meta">
                 <div class="meta-item">
                     <span class="meta-label">Issued At</span>
-                    <span class="meta-value" th:text="${tokenIssuedAt}">N/A</span>
+                    <span class="meta-value" th:text="${tokenIssuedAt} ?: 'N/A'">N/A</span>
                 </div>
                 <div class="meta-item">
                     <span class="meta-label">Expires At</span>
-                    <span class="meta-value" th:text="${tokenExpiresAt}">N/A</span>
+                    <span class="meta-value" th:text="${tokenExpiresAt} ?: 'N/A'">N/A</span>
                 </div>
                 <div class="meta-item" th:if="${tokenAuthorizedParty}">
                     <span class="meta-label">Authorized Party</span>
@@ -220,24 +295,56 @@
                 </div>
             </div>
 
-            <div>
+            <!-- Token Actions -->
+            <div class="token-actions">
                 <strong>Full JWT Token:</strong>
                 <button class="btn btn-copy" onclick="copyToClipboard('full-token')">Copy Token</button>
+                <button class="btn btn-expand" onclick="toggleTokenExpansion('full-token')">Expand/Collapse</button>
             </div>
-            <div class="token-display" id="full-token" th:text="${idToken}">
+
+            <div class="token-info">
+                <small>Click on the token to expand/collapse, or use the buttons above</small>
+            </div>
+
+            <!-- Token Display -->
+            <div class="token-display" id="full-token" th:text="${idToken} ?: 'No token available'">
                 JWT token will appear here...
             </div>
+
+            <!-- Token Structure (Educational) -->
+            <div th:if="${tokenHeader}">
+                <h4>Token Header</h4>
+                <div class="token-display header-token" id="header-token" th:text="${tokenHeader}"></div>
+            </div>
+
+            <div th:if="${tokenPayload}">
+                <h4>Token Payload</h4>
+                <div class="token-display payload-token" id="payload-token" th:text="${tokenPayload}"></div>
+            </div>
         </div>
+
+        <div class="section-divider"></div>
 
         <!-- Claims Section -->
         <div class="token-section">
             <h3>📋 OIDC Claims</h3>
-            <div class="claims-grid">
+            <div th:if="${claims != null and !claims.isEmpty()}" class="claims-grid">
                 <div class="claim-item" th:each="claim : ${claims}">
                     <span class="claim-key" th:text="${claim.key}">Key</span>
                     <span class="claim-value" th:text="${claim.value}">Value</span>
                 </div>
             </div>
+            <div th:if="${claims == null or claims.isEmpty()}" class="no-data">
+                No claims available
+            </div>
+        </div>
+    </div>
+
+    <!-- Not Authenticated Message -->
+    <div class="card" th:unless="${name}">
+        <div class="no-data">
+            <h3>Not Authenticated</h3>
+            <p>You are not logged in. Please <a th:href="@{/login}">login</a> to view this page.</p>
         </div>
     </div>
 </div>
@@ -252,29 +359,98 @@
         const element = document.getElementById(elementId);
         const text = element.textContent || element.innerText;
 
+        // Don't copy if it's the placeholder text
+        if (text.includes('No token available') || text.includes('JWT token will appear here')) {
+            showNotification('❌ No token available to copy', false);
+            return;
+        }
+
         navigator.clipboard.writeText(text).then(() => {
-            // Show notification
-            const notification = document.getElementById('copy-notification');
-            notification.style.display = 'block';
-            setTimeout(() => {
-                notification.style.display = 'none';
-            }, 2000);
+            showNotification('✅ Copied to clipboard!', true);
         }).catch(err => {
             console.error('Failed to copy: ', err);
-            alert('Failed to copy to clipboard');
+            showNotification('❌ Failed to copy to clipboard', false);
         });
     }
 
-    // Auto-expand token displays on click
+    function showNotification(message, isSuccess) {
+        const notification = document.getElementById('copy-notification');
+        notification.textContent = message;
+        notification.style.background = isSuccess ? '#34a853' : '#ea4335';
+        notification.style.display = 'block';
+
+        setTimeout(() => {
+            notification.style.display = 'none';
+        }, 3000);
+    }
+
+    function toggleTokenExpansion(elementId) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            const isExpanded = element.classList.toggle('expanded');
+
+            // Update button text
+            const buttons = document.querySelectorAll('.btn-expand');
+            buttons.forEach(button => {
+                if (button.getAttribute('onclick')?.includes(elementId)) {
+                    button.textContent = isExpanded ? 'Collapse' : 'Expand/Collapse';
+                }
+            });
+        }
+    }
+
+    // Initialize when page loads
     document.addEventListener('DOMContentLoaded', function() {
+        // Click to expand token displays
         const tokenDisplays = document.querySelectorAll('.token-display');
         tokenDisplays.forEach(display => {
             display.addEventListener('click', function() {
-                this.style.whiteSpace = this.style.whiteSpace === 'pre-wrap' ? 'nowrap' : 'pre-wrap';
-                this.style.overflow = this.style.overflow === 'auto' ? 'hidden' : 'auto';
-                this.style.maxHeight = this.style.maxHeight ? '' : '300px';
+                const isExpanded = this.classList.toggle('expanded');
+                const tokenId = this.id;
+
+                // Update button text
+                const buttons = document.querySelectorAll('.btn-expand');
+                buttons.forEach(button => {
+                    if (button.getAttribute('onclick')?.includes(tokenId)) {
+                        button.textContent = isExpanded ? 'Collapse' : 'Expand/Collapse';
+                    }
+                });
             });
         });
+
+        // Add auto-wrap to all meta values and claim values
+        const wrapElements = document.querySelectorAll('.meta-value, .claim-value');
+        wrapElements.forEach(element => {
+            element.style.wordBreak = 'break-word';
+            element.style.overflowWrap = 'break-word';
+            element.style.whiteSpace = 'normal';
+        });
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+C or Cmd+C to copy the first token
+        if ((e.ctrlKey || e.metaKey) && e.key === 'c') {
+            const tokenElement = document.getElementById('full-token');
+            if (tokenElement && document.activeElement !== tokenElement) {
+                e.preventDefault();
+                copyToClipboard('full-token');
+            }
+        }
+
+        // Escape to collapse all tokens
+        if (e.key === 'Escape') {
+            const tokenDisplays = document.querySelectorAll('.token-display');
+            tokenDisplays.forEach(display => {
+                display.classList.remove('expanded');
+            });
+
+            // Reset all button texts
+            const buttons = document.querySelectorAll('.btn-expand');
+            buttons.forEach(button => {
+                button.textContent = 'Expand/Collapse';
+            });
+        }
     });
 </script>
 </body>
